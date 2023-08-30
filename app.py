@@ -5,24 +5,25 @@ def calculate_sofa_score(resp_ratio, platelets, bilirubin, map, creatinine, gcs)
     sofa_score = 0
     
     # Respiratory
-    if resp_ratio < 100: sofa_score += 1
-    if resp_ratio < 200: sofa_score += 2
-    if resp_ratio < 300: sofa_score += 3
-    if resp_ratio < 400: sofa_score += 4
+    if resp_ratio < 100: sofa_score += 4
+    elif resp_ratio < 200: sofa_score += 3
+    elif resp_ratio < 300: sofa_score += 2
+    elif resp_ratio < 400: sofa_score += 1
     
     # Coagulation
-    if platelets < 50: sofa_score += 4
-    elif platelets < 100: sofa_score += 3
-    elif platelets < 150: sofa_score += 2
-    elif platelets < 200: sofa_score += 1
+    if platelets < 20: sofa_score += 4
+    elif platelets < 50: sofa_score += 3
+    elif platelets < 100: sofa_score += 2
+    elif platelets < 150: sofa_score += 1
     
     # Liver
-    if bilirubin >= 6: sofa_score += 4
-    elif bilirubin >= 2: sofa_score += 3
+    if bilirubin >= 12: sofa_score += 4
+    elif bilirubin >= 6: sofa_score += 3
+    elif bilirubin >= 2: sofa_score += 2
     elif bilirubin >= 1.2: sofa_score += 1
     
     # Cardiovascular
-    if map <= 70: sofa_score += 1
+    if map < 70: sofa_score += 1
     
     # Creatinine or Urine output
     if creatinine >= 5: sofa_score += 4
