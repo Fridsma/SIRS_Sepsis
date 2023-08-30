@@ -1,45 +1,88 @@
 import streamlit as st
 
-# Define the criteria for SIRS, Sepsis, and Septic Shock
-def assess_condition(temp, heart_rate, resp_rate, paco2, wbc, infection, sysbp, lactate):
-    sirs_criteria = 0
-    sepsis = False
-    septic_shock = False
+# Function to calculate SOFA score
+def calculate_sofa_score(resp_ratio, platelets, bilirubin, map, creatinine, gcs):
+    sofa_score = 0
     
-    if temp < 36 or temp > 38:
-        sirs_criteria += 1
-    if heart_rate > 90:
-        sirs_criteria += 1
-    if resp_rate > 20 or paco2 < 32:  # Included paco2 in this line
-        sirs_criteria += 1
-    if wbc < 4 or wbc > 12:
-        sirs_criteria += 1
+    # Respiratory
+    if resp_ratio < 100: sofa_score += 1
+    if resp_ratio < 200: sofa_score += 2
+    if resp_ratio < 300: sofa_score += 3
+    if resp_ratio < 400: sofa_score += 4
     
-    if sirs_criteria >= 2 and infection:
-        sepsis = True
+    # Coagulation
+    if platelets < 50: sofa_score += 4
+    elif platelets < 100: sofa_score += 3
+    elif platelets < 150: sofa_score += 2
+    elif platelets < 200: sofa_score += 1
     
-    if sepsis and (sysbp < 90 or lactate > 4):
-        septic_shock = True
+    # Liver
+    if bilirubin >= 6: sofa_score += 4
+    elif bilirubin >= 2: sofa_score += 3
+    elif bilirubin >= 1.2: sofa_score += 1
     
-    return sirs_criteria, sepsis, septic_shock
+    # Cardiovascular
+    if map <= 70: sofa_score += 1
+    
+    # Creatinine or Urine output
+    if creatinine >= 5: sofa_score += 4
+    elif creatinine >= 3.5: sofa_score += 3
+    elif creatinine >= 2: sofa_score += 2
+    elif creatinine >= 1.2: sofa_score += 1
+    
+    # Neurological
+    if gcs < 6: sofa_score += 4
+    elif gcs < 10: sofa_score += 3
+    elif gcs < 13: sofa_score += 2
+    elif gcs < 15: sofa_score += 1
+    
+    return sofa_score
 
-# Create the Streamlit app
-st.title('SIRS, Sepsis, and Septic Shock Assessment')
+# Streamlit app
+st.title('Sepsis Assessment using qSOFA and SOFA')
 
-# Input patient data
-temp = st.number_input('Temperature (°C)', 0.0, 50.0)
-heart_rate = st.number_input('Heart rate (bpm)', 0, 300)
-resp_rate = st.number_input('Respiratory rate (breaths/min)', 0, 60)
-paco2 = st.number_input('PaCO2 (mm Hg)', 0.0, 100.0)  # Included paco2 as an input
-wbc = st.number_input('White blood cell count (x10^9/L)', 0.0, 50.0)
-infection = st.checkbox('Confirmed infection?')
-sysbp = st.number_input('Systolic blood pressure (mmHg)', 0, 300)
-lactate = st.number_input('Serum lactate (mmol/L)', 0.0, 50.0)
+# qSOFA criteria
+st.subheader('Quick SOFA (qSOFA) Assessment')
+resp_rate = st.number_input('Respiratory Rate (>=22 breaths/min)', 0, 50)
+altered_mentation = st.checkbox('Altered mentation (GCS < 15)')
+sysbp_qsofa = st.number_input('Systolic Blood Pressure (<=100 mmHg)', 0, 200)
 
-# Assess condition based on input
-sirs_criteria, sepsis, septic_shock = assess_condition(temp, heart_rate, resp_rate, paco2, wbc, infection, sysbp, lactate)
+qsofa_score = 0
+if resp_rate >= 22: qsofa_score += 1
+if altered_mentation: qsofa_score += 1
+if sysbp_qsofa <= 100: qsofa_score += 1
 
-# Display results
-st.write('SIRS Criteria Met:', sirs_criteria)
-st.write('Sepsis:', sepsis)
-st.write('Septic Shock:', septic_shock)
+st.write('qSOFA Score:', qsofa_score)
+
+# Full SOFA Assessment if qSOFA is positive
+if qsofa_score >= 2:
+    st.subheader('Full SOFA Assessment')
+    
+    # Respiratory
+    resp_ratio = st.number_input('PaO2/FiO2 ratio', 0, 500)
+    
+    # Coagulation
+    platelets = st.number_input('Platelet count (x10^3/µL)', 0, 500)
+    
+    # Liver
+    bilirubin = st.number_input('Total bilirubin (mg/dL)', 0.0, 20.0)
+    
+    # Cardiovascular
+    map = st.number_input('Mean arterial pressure (mmHg)', 0, 200)
+    
+    # Creatinine or Urine output
+    creatinine = st.number_input('Serum creatinine (mg/dL)', 0.0, 20.0)
+    
+    # Neurological
+    gcs = st.number_input('Glasgow Coma Scale', 3, 15)
+    
+    # Calculate full SOFA score
+    sofa_score = calculate_sofa_score(resp_ratio, platelets, bilirubin, map, creatinine, gcs)
+    st.write('Full SOFA Score:', sofa_score)
+    
+    if sofa_score >= 2:
+        st.write('Sepsis confirmed based on full SOFA score.')
+    else:
+        st.write('Sepsis not confirmed based on full SOFA score.')
+else:
+    st.write('Sepsis not suspected based on qSOFA score.')
